@@ -12,7 +12,7 @@ export const AppContextProvider = ({ children }) => {
     const [credit, setCredit] = useState(0);
 
     const navigate = useNavigate();
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const backendUrl = https://phonix-backend.onrender.com;
 
     const loadCreditData = async () => {
         try {
