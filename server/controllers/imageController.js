@@ -1,11 +1,12 @@
 import FormData from "form-data";
 import axios from "axios";
 import userModel from "../models/userModel.js";
+import galleryModel from "../models/galleryModel.js"; // add karo
 
 export const generateImage = async (req, res) => {
     try {
-        const { prompt } = req.body;
-        const userId = req.userId;  // ✅ comes from JWT auth middleware
+        const { prompt } = req.body; // visibility bhi lo frontend se
+        const userId = req.userId;
 
         if (!userId || !prompt) {
             return res.json({ success: false, message: "Missing Details" });
@@ -17,7 +18,11 @@ export const generateImage = async (req, res) => {
         }
 
         if (user.creditBalance <= 0) {
-            return res.json({ success: false, message: "No Credit Balance", creditBalance: user.creditBalance });
+            return res.json({
+                success: false,
+                message: "No Credit Balance",
+                creditBalance: user.creditBalance,
+            });
         }
 
         const formData = new FormData();
@@ -27,22 +32,30 @@ export const generateImage = async (req, res) => {
             "https://clipdrop-api.co/text-to-image/v1",
             formData,
             {
-                headers: {
-                    'x-api-key': process.env.CLIPDROP_API,
-                },
+                headers: { "x-api-key": process.env.CLIPDROP_API },
                 responseType: "arraybuffer",
-            }
+            },
         );
-
 
         const base64Image = Buffer.from(data, "binary").toString("base64");
         const resultImage = `data:image/png;base64,${base64Image}`;
 
+        // Credit kaato
         const updatedUser = await userModel.findByIdAndUpdate(
             user._id,
             { $inc: { creditBalance: -1 } },
-            { new: true }
+            { new: true },
         );
+
+        // Auto gallery mein save karo
+        const finalVisibility = user.isPro ? "private" : "public";
+
+        await galleryModel.create({
+            userId,
+            imageUrl: resultImage,
+            prompt,
+            visibility: finalVisibility,
+        });
 
         res.json({
             success: true,

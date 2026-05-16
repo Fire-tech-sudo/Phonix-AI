@@ -20,7 +20,9 @@ const registerUser = async (req, res) => {
         const newUser = new userModel(userData);
         const user = await newUser.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: "7d",
+        });
 
         res.json({ success: true, token, user: { name: user.name } });
     } catch (error) {
@@ -34,12 +36,16 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await userModel.findOne({ email });
-        if (!user) return res.json({ success: false, message: "User does not exist" });
+        if (!user)
+            return res.json({ success: false, message: "User does not exist" });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.json({ success: false, message: "Invalid Credentials" });
+        if (!isMatch)
+            return res.json({ success: false, message: "Invalid Credentials" });
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: "7d",
+        });
 
         res.json({ success: true, token, user: { name: user.name } });
     } catch (error) {
@@ -52,7 +58,8 @@ const loginUser = async (req, res) => {
 const userCredits = async (req, res) => {
     try {
         const user = await userModel.findById(req.userId);
-        if (!user) return res.json({ success: false, message: "User not found" });
+        if (!user)
+            return res.json({ success: false, message: "User not found" });
 
         res.json({
             success: true,
@@ -82,16 +89,26 @@ const paymentRazorpay = async (req, res) => {
         }
 
         const user = await userModel.findById(userId);
-        if (!user) return res.json({ success: false, message: "User not found" });
+        if (!user)
+            return res.json({ success: false, message: "User not found" });
 
         let credits, plan, amount;
         switch (planId) {
             case "Basic":
-                plan = "Basic"; credits = 100; amount = 10; break;      // ₹10
+                plan = "Basic";
+                credits = 100;
+                amount = 10;
+                break; // ₹10
             case "Advanced":
-                plan = "Advanced"; credits = 500; amount = 50; break;   // ₹50
+                plan = "Advanced";
+                credits = 500;
+                amount = 50;
+                break; // ₹50
             case "Business":
-                plan = "Business"; credits = 5000; amount = 250; break; // ₹250
+                plan = "Business";
+                credits = 5000;
+                amount = 250;
+                break; // ₹250
             default:
                 return res.json({ success: false, message: "Plan Not Found" });
         }
@@ -114,7 +131,9 @@ const paymentRazorpay = async (req, res) => {
         const order = await razorpayInstance.orders.create(options);
 
         // store orderId on transaction for easier reconciliation (optional but nice)
-        await transactionModel.findByIdAndUpdate(transaction._id, { orderId: order.id });
+        await transactionModel.findByIdAndUpdate(transaction._id, {
+            orderId: order.id,
+        });
 
         return res.json({ success: true, order });
     } catch (error) {
@@ -134,45 +153,80 @@ const paymentRazorpay = async (req, res) => {
 */
 const verifyRazorpay = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+            req.body;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-            return res.json({ success: false, message: "Missing Razorpay fields" });
+            return res.json({
+                success: false,
+                message: "Missing Razorpay fields",
+            });
         }
 
-        // 1) Verify signature
-        const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+        // 1) Signature verify karo
+        const hmac = crypto.createHmac(
+            "sha256",
+            process.env.RAZORPAY_KEY_SECRET,
+        );
         hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
         const expectedSignature = hmac.digest("hex");
 
         if (expectedSignature !== razorpay_signature) {
-            return res.json({ success: false, message: "Signature verification failed" });
+            return res.json({
+                success: false,
+                message: "Signature verification failed",
+            });
         }
 
-        // 2) Fetch order to get the receipt (transaction id)
-        const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
+        // 2) Transaction fetch karo
+        const orderInfo =
+            await razorpayInstance.orders.fetch(razorpay_order_id);
         const transactionId = orderInfo?.receipt;
         if (!transactionId) {
-            return res.json({ success: false, message: "Receipt not found on order" });
+            return res.json({
+                success: false,
+                message: "Receipt not found on order",
+            });
         }
 
         const transaction = await transactionModel.findById(transactionId);
         if (!transaction) {
-            return res.json({ success: false, message: "Transaction not found" });
+            return res.json({
+                success: false,
+                message: "Transaction not found",
+            });
         }
 
-        // Idempotency: if already marked paid, don't double-credit
+        // Idempotency check
         if (transaction.payment) {
             return res.json({ success: true, message: "Already credited" });
         }
 
-        // 3) Credit user & mark transaction paid
+        // 3) User fetch karo
         const user = await userModel.findById(transaction.userId);
-        if (!user) return res.json({ success: false, message: "User not found" });
+        if (!user)
+            return res.json({ success: false, message: "User not found" });
 
+        // 4) Credits update karo
         const newBalance = (user.creditBalance || 0) + transaction.credits;
 
-        await userModel.findByIdAndUpdate(user._id, { creditBalance: newBalance });
+        // 5) Pro expiry calculate karo — extend karo agar already Pro hai
+        const baseDate =
+            user.isPro && user.proExpiresAt && user.proExpiresAt > new Date()
+                ? new Date(user.proExpiresAt) // existing expiry se extend
+                : new Date(); // naya start aaj se
+
+        baseDate.setDate(baseDate.getDate() + 30);
+        const newProExpiry = baseDate;
+
+        // 6) User update karo
+        await userModel.findByIdAndUpdate(user._id, {
+            creditBalance: newBalance,
+            isPro: true,
+            proExpiresAt: newProExpiry,
+        });
+
+        // 7) Transaction mark karo paid
         await transactionModel.findByIdAndUpdate(transaction._id, {
             payment: true,
             paymentId: razorpay_payment_id,
@@ -180,11 +234,23 @@ const verifyRazorpay = async (req, res) => {
             paidAt: Date.now(),
         });
 
-        return res.json({ success: true, message: "Credits Added", credits: newBalance });
+        return res.json({
+            success: true,
+            message: "Credits Added & Pro Activated",
+            credits: newBalance,
+            isPro: true,
+            proExpiresAt: newProExpiry,
+        });
     } catch (error) {
         console.log(error);
         return res.json({ success: false, message: error.message });
     }
 };
 
-export { registerUser, loginUser, userCredits, paymentRazorpay, verifyRazorpay };
+export {
+    registerUser,
+    loginUser,
+    userCredits,
+    paymentRazorpay,
+    verifyRazorpay,
+};

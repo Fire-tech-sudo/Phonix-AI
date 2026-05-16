@@ -6,3 +6,4 @@ node_modules/
 venv/
 .env.local
 .env.production
+node_modules
