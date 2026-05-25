@@ -41,32 +41,28 @@ const Result = () => {
             >
                 <div>
                     {/* Image Box with Theme Glow & Border */}
-                    <div
+                    <div 
                         className="relative rounded-2xl overflow-hidden border transition-all duration-500"
                         style={{
-                            borderColor: "var(--border-color)",
-                            boxShadow: "0 10px 40px var(--shadow-color)",
+                            borderColor: 'var(--border-color)',
+                            boxShadow: '0 10px 40px var(--shadow-color)'
                         }}
                     >
-                        <img
-                            src={image}
-                            alt="Generated UI"
-                            className="max-w-sm rounded-2xl"
-                        />
-
+                        <img src={image} alt="Generated UI" className="max-w-sm rounded-2xl" />
+                        
                         {/* Dynamic Loading Bar */}
                         <span
                             className={`absolute bottom-0 left-0 h-1.5 transition-all duration-[10s] ease-out`}
                             style={{
                                 width: loading ? "100%" : "0%",
                                 backgroundColor: "var(--accent-primary)",
-                                boxShadow: "0 0 15px var(--btn-glow)",
+                                boxShadow: "0 0 15px var(--btn-glow)"
                             }}
                         />
                     </div>
-
+                    
                     {/* Pulsing Loading Text */}
-                    <p
+                    <p 
                         className={`mt-4 text-center tracking-widest text-sm uppercase font-semibold animate-pulse transition-colors duration-500 ${!loading ? "hidden" : ""}`}
                         style={{ color: "var(--accent-primary)" }}
                     >
@@ -75,13 +71,13 @@ const Result = () => {
                 </div>
 
                 {!isImageLoaded && (
-                    <div
+                    <div 
                         className="flex w-full max-w-xl text-sm p-1.5 mt-10 rounded-full border transition-colors duration-500 focus-within:ring-2"
                         style={{
                             backgroundColor: "var(--bg-input)",
                             borderColor: "var(--border-color)",
                             boxShadow: "0 15px 35px var(--shadow-color)",
-                            "--tw-ring-color": "var(--accent-primary)",
+                            "--tw-ring-color": "var(--accent-primary)"
                         }}
                     >
                         <input
@@ -96,10 +92,9 @@ const Result = () => {
                             type="submit"
                             className="cursor-pointer px-10 sm:px-16 py-3.5 rounded-full font-bold tracking-wide hover:scale-105 transition-all duration-300"
                             style={{
-                                background:
-                                    "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
+                                background: "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
                                 color: "var(--bg-primary)",
-                                boxShadow: "0 4px 15px var(--btn-glow)",
+                                boxShadow: "0 4px 15px var(--btn-glow)"
                             }}
                         >
                             Generate
@@ -119,7 +114,7 @@ const Result = () => {
                                 borderColor: "var(--accent-primary)",
                                 color: "var(--text-primary)",
                                 backgroundColor: "var(--bg-secondary)",
-                                boxShadow: "0 5px 15px var(--shadow-color)",
+                                boxShadow: "0 5px 15px var(--shadow-color)"
                             }}
                         >
                             Generate Another
@@ -129,10 +124,9 @@ const Result = () => {
                             download
                             className="px-10 py-3.5 rounded-full cursor-pointer font-bold tracking-wide hover:scale-105 transition-all duration-300"
                             style={{
-                                background:
-                                    "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
+                                background: "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
                                 color: "var(--bg-primary)",
-                                boxShadow: "0 4px 15px var(--btn-glow)",
+                                boxShadow: "0 4px 15px var(--btn-glow)"
                             }}
                         >
                             Download Image

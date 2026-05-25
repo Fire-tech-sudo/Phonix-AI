@@ -11,23 +11,18 @@ const GallerySidebar = () => {
 	const [selectedImage, setSelectedImage] = useState(null);
 
 	const { backendUrl, token } = useContext(AppContext);
-
 	const navigate = useNavigate();
 
 	const fetchMyGallery = async () => {
 		setGalleryLoading(true);
 		try {
 			if (token) {
-				// Logged in — personalized feed
 				const { data } = await axios.get(
 					`${backendUrl}/api/image/gallery/feed`,
-					{
-						headers: { token },
-					},
+					{ headers: { token } },
 				);
 				if (data.success) setMyImages(data.data);
 			} else {
-				// Logged out — sirf public images
 				const { data } = await axios.get(
 					`${backendUrl}/api/image/gallery/public`,
 				);
@@ -42,11 +37,11 @@ const GallerySidebar = () => {
 
 	useEffect(() => {
 		fetchMyGallery();
-	}, [token]); // token change hone pe — login/logout dono pe trigger hoga
+	}, [token]);
 
 	return (
 		<>
-			{/* Sidebar */}
+			{/* Theme-Ready Dynamic Sidebar */}
 			<motion.div
 				animate={{ width: collapsed ? 56 : 240 }}
 				transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
@@ -58,26 +53,25 @@ const GallerySidebar = () => {
 					zIndex: 40,
 					display: "flex",
 					flexDirection: "column",
-					background: "rgba(255,255,255,0.18)",
-					backdropFilter: "blur(18px)",
-					WebkitBackdropFilter: "blur(18px)",
-					borderRight: "1px solid rgba(255,255,255,0.3)",
-					boxShadow: "4px 0 24px rgba(0,0,0,0.06)",
+					background: "var(--bg-secondary)", // Dynamic background
+					borderRight: "1px solid var(--border-color)",
+					boxShadow: "4px 0 24px var(--shadow-color)",
 					overflow: "hidden",
+					transition:
+						"background-color 0.5s ease, border-color 0.5s ease",
 				}}
 			>
-				{/* Header */}
 				{/* Header */}
 				<div
 					style={{
 						display: "flex",
 						alignItems: "center",
-						justifyContent: "center", // hamesha center
+						justifyContent: "center",
 						padding: "20px 14px",
-						borderBottom: "1px solid rgba(255,255,255,0.25)",
+						borderBottom: "1px solid var(--border-color)",
 						minHeight: 64,
 						flexShrink: 0,
-						position: "relative", // title ke liye
+						position: "relative",
 					}}
 				>
 					<AnimatePresence>
@@ -100,7 +94,7 @@ const GallerySidebar = () => {
 									style={{
 										fontSize: 13,
 										fontWeight: 600,
-										color: "#1a1a2e",
+										color: "var(--text-primary)", // Dynamic Text
 										letterSpacing: "0.04em",
 										whiteSpace: "nowrap",
 										fontFamily: "'DM Sans', sans-serif",
@@ -112,22 +106,22 @@ const GallerySidebar = () => {
 						)}
 					</AnimatePresence>
 
-					{/* Toggle Button — hamesha center mein */}
+					{/* Toggle Button */}
 					<button
 						onClick={() => setCollapsed(!collapsed)}
 						style={{
 							width: 28,
 							height: 28,
 							borderRadius: "50%",
-							border: "1px solid rgba(0,0,0,0.1)",
-							background: "rgba(255,255,255,0.6)",
+							border: "1px solid var(--border-color)",
+							background: "var(--bg-card)",
 							cursor: "pointer",
 							display: "flex",
 							alignItems: "center",
 							justifyContent: "center",
 							flexShrink: 0,
-							transition: "background 0.2s",
-							marginLeft: collapsed ? 0 : "auto", // expanded me right side
+							transition: "all 0.3s ease",
+							marginLeft: collapsed ? 0 : "auto",
 						}}
 						title={
 							collapsed ? "Expand gallery" : "Collapse gallery"
@@ -138,7 +132,7 @@ const GallerySidebar = () => {
 							transition={{ duration: 0.3 }}
 							style={{
 								fontSize: 12,
-								color: "#555",
+								color: "var(--text-secondary)",
 								lineHeight: 1,
 								position: "relative",
 								left: collapsed ? "2px" : "-2px",
@@ -149,7 +143,7 @@ const GallerySidebar = () => {
 					</button>
 				</div>
 
-				{/* Collapsed: icon strip */}
+				{/* Collapsed: Icon Strip */}
 				{collapsed && (
 					<div
 						style={{
@@ -170,7 +164,7 @@ const GallerySidebar = () => {
 										width: 40,
 										height: 40,
 										borderRadius: 10,
-										background: "rgba(0,0,0,0.08)",
+										background: "var(--border-color)", // Theme loader
 										flexShrink: 0,
 										animation: "pulse 1.5s infinite",
 									}}
@@ -193,8 +187,9 @@ const GallerySidebar = () => {
 										overflow: "hidden",
 										cursor: "pointer",
 										flexShrink: 0,
-										border: "1.5px solid rgba(255,255,255,0.5)",
-										boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+										border: "2px solid var(--border-color)", // Dynamic border
+										boxShadow:
+											"0 2px 8px var(--shadow-color)",
 									}}
 									title={img.prompt}
 								>
@@ -213,7 +208,7 @@ const GallerySidebar = () => {
 					</div>
 				)}
 
-				{/* Expanded: full gallery */}
+				{/* Expanded: Full Gallery */}
 				{!collapsed && (
 					<div
 						style={{
@@ -230,16 +225,17 @@ const GallerySidebar = () => {
 							onClick={fetchMyGallery}
 							style={{
 								fontSize: 11,
-								color: "rgba(0,0,0,0.4)",
+								color: "var(--accent-primary)", // Theme Refresh Button
 								background: "none",
 								border: "none",
 								cursor: "pointer",
 								textAlign: "right",
 								padding: "0 4px 4px",
 								letterSpacing: "0.03em",
+								fontWeight: "bold",
 							}}
 						>
-							↻ refresh
+							↻ Refresh
 						</button>
 
 						{galleryLoading ? (
@@ -250,7 +246,7 @@ const GallerySidebar = () => {
 										width: "100%",
 										height: 130,
 										borderRadius: 14,
-										background: "rgba(0,0,0,0.07)",
+										background: "var(--border-color)",
 										animation: "pulse 1.5s infinite",
 									}}
 								/>
@@ -272,7 +268,7 @@ const GallerySidebar = () => {
 								<p
 									style={{
 										fontSize: 12,
-										color: "rgba(0,0,0,0.4)",
+										color: "var(--text-secondary)",
 										lineHeight: 1.6,
 										margin: 0,
 									}}
@@ -295,9 +291,9 @@ const GallerySidebar = () => {
 										borderRadius: 14,
 										overflow: "hidden",
 										cursor: "pointer",
-										border: "1px solid rgba(255,255,255,0.4)",
+										border: "1px solid var(--border-color)",
 										boxShadow:
-											"0 2px 12px rgba(0,0,0,0.08)",
+											"0 2px 12px var(--shadow-color)",
 										flexShrink: 0,
 									}}
 								>
@@ -311,6 +307,7 @@ const GallerySidebar = () => {
 											display: "block",
 										}}
 									/>
+
 									{/* Visibility badge */}
 									<span
 										style={{
@@ -318,18 +315,16 @@ const GallerySidebar = () => {
 											top: 7,
 											right: 7,
 											fontSize: 9,
-											padding: "2px 7px",
+											padding: "3px 8px",
 											borderRadius: 20,
-											fontWeight: 600,
+											fontWeight: 700,
 											letterSpacing: "0.04em",
-											background:
-												img.visibility === "private"
-													? "rgba(20,20,20,0.75)"
-													: "rgba(255,255,255,0.8)",
+											background: "var(--bg-card)",
 											color:
 												img.visibility === "private"
-													? "#fff"
-													: "#333",
+													? "var(--accent-primary)"
+													: "var(--text-secondary)",
+											border: `1px solid ${img.visibility === "private" ? "var(--accent-primary)" : "var(--border-color)"}`,
 											backdropFilter: "blur(4px)",
 										}}
 									>
@@ -337,6 +332,7 @@ const GallerySidebar = () => {
 											? "🔒 Private"
 											: "🌐 Public"}
 									</span>
+
 									{/* Prompt overlay */}
 									<div
 										style={{
@@ -345,8 +341,8 @@ const GallerySidebar = () => {
 											left: 0,
 											right: 0,
 											background:
-												"linear-gradient(to top, rgba(0,0,0,0.6), transparent)",
-											padding: "20px 8px 8px",
+												"linear-gradient(to top, rgba(0,0,0,0.8), transparent)",
+											padding: "25px 10px 10px",
 										}}
 									>
 										<p
@@ -371,7 +367,7 @@ const GallerySidebar = () => {
 				)}
 			</motion.div>
 
-			{/* Image Preview Modal */}
+			{/* Image Preview Modal (Theme Integrated) */}
 			<AnimatePresence>
 				{selectedImage && (
 					<motion.div
@@ -383,8 +379,8 @@ const GallerySidebar = () => {
 							position: "fixed",
 							inset: 0,
 							zIndex: 100,
-							background: "rgba(0,0,0,0.55)",
-							backdropFilter: "blur(6px)",
+							background: "rgba(0,0,0,0.65)",
+							backdropFilter: "blur(8px)",
 							display: "flex",
 							alignItems: "center",
 							justifyContent: "center",
@@ -398,14 +394,13 @@ const GallerySidebar = () => {
 							transition={{ duration: 0.25 }}
 							onClick={(e) => e.stopPropagation()}
 							style={{
-								background: "rgba(255,255,255,0.92)",
-								backdropFilter: "blur(20px)",
+								background: "var(--bg-card)", // Dynamic Modal Bg
 								borderRadius: 20,
 								overflow: "hidden",
 								maxWidth: 480,
 								width: "100%",
-								boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
-								border: "1px solid rgba(255,255,255,0.6)",
+								boxShadow: "0 25px 60px var(--shadow-color)",
+								border: "1px solid var(--accent-primary)", // Premium active border
 							}}
 						>
 							<img
@@ -418,17 +413,19 @@ const GallerySidebar = () => {
 									display: "block",
 								}}
 							/>
-							<div style={{ padding: "14px 16px" }}>
+
+							<div style={{ padding: "18px 20px" }}>
 								<p
 									style={{
-										fontSize: 13,
-										color: "#444",
+										fontSize: 14,
+										color: "var(--text-primary)",
 										lineHeight: 1.6,
-										margin: "0 0 12px",
+										margin: "0 0 16px",
 									}}
 								>
 									{selectedImage.prompt}
 								</p>
+
 								<div
 									style={{
 										display: "flex",
@@ -439,38 +436,39 @@ const GallerySidebar = () => {
 									<span
 										style={{
 											fontSize: 11,
-											padding: "4px 10px",
+											padding: "5px 12px",
 											borderRadius: 20,
-											background:
-												selectedImage.visibility ===
-												"private"
-													? "#f0f0f0"
-													: "#eff6ff",
+											background: "var(--bg-input)",
 											color:
 												selectedImage.visibility ===
 												"private"
-													? "#555"
-													: "#3b82f6",
-											fontWeight: 500,
+													? "var(--accent-primary)"
+													: "var(--text-secondary)",
+											border: `1px solid ${selectedImage.visibility === "private" ? "var(--accent-primary)" : "var(--border-color)"}`,
+											fontWeight: 600,
 										}}
 									>
 										{selectedImage.visibility === "private"
 											? "🔒 Private"
 											: "🌐 Public"}
 									</span>
-									<div style={{ display: "flex", gap: 8 }}>
+
+									<div style={{ display: "flex", gap: 10 }}>
 										{token && (
 											<a
 												href={selectedImage.imageUrl}
 												download
 												style={{
 													fontSize: 12,
-													background: "#18181b",
-													color: "#fff",
-													padding: "7px 16px",
+													background:
+														"linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
+													color: "var(--bg-primary)",
+													padding: "8px 18px",
 													borderRadius: 20,
 													textDecoration: "none",
-													fontWeight: 500,
+													fontWeight: 700,
+													boxShadow:
+														"0 4px 10px var(--btn-glow)",
 													display: "inline-block",
 												}}
 											>
@@ -483,12 +481,14 @@ const GallerySidebar = () => {
 											}
 											style={{
 												fontSize: 12,
-												border: "1px solid #e5e5e5",
-												background: "none",
-												color: "#555",
-												padding: "7px 16px",
+												border: "1px solid var(--border-color)",
+												background:
+													"var(--bg-secondary)",
+												color: "var(--text-primary)",
+												padding: "8px 18px",
 												borderRadius: 20,
 												cursor: "pointer",
+												fontWeight: 600,
 											}}
 										>
 											Close
@@ -502,11 +502,11 @@ const GallerySidebar = () => {
 			</AnimatePresence>
 
 			<style>{`
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-            `}</style>
+				@keyframes pulse {
+					0%, 100% { opacity: 1; }
+					50% { opacity: 0.4; }
+				}
+			`}</style>
 		</>
 	);
 };

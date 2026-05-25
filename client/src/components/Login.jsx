@@ -1,144 +1,254 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { assets } from '../assets/assets';
-import { AppContext } from '../context/AppContext';
+import React, { useContext, useEffect, useState } from "react";
+import { AppContext } from "../context/AppContext";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
+// 🔥 Lucide Icons aur custom CrossIcon
+import { User, Mail, Lock } from "lucide-react";
+import CrossIcon from "../imageComponents/CrossIcon";
 
 const Login = () => {
     const [state, setState] = useState("Login");
-    const { setShowLogin, backendUrl, setToken, setUser } = useContext(AppContext);
+    const { setShowLogin, backendUrl, setToken, setUser } =
+        useContext(AppContext);
 
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const onSubmitHandler = async (e) => {
         e.preventDefault();
         try {
-            if (state === 'Login') {
-                const { data } = await axios.post(backendUrl + '/api/user/login', {
-                    email,
-                    password
-                });
+            if (state === "Login") {
+                const { data } = await axios.post(
+                    backendUrl + "/api/user/login",
+                    { email, password },
+                );
 
-                if (data.success || data.sucess) { // ✅ handles both spellings
+                if (data.success || data.sucess) {
                     setToken(data.token);
                     setUser(data.user);
-                    localStorage.setItem('token', data.token);
+                    localStorage.setItem("token", data.token);
                     setShowLogin(false);
                 } else {
                     toast.error(data.message);
                 }
             } else {
-                const { data } = await axios.post(backendUrl + '/api/user/register', {
-                    name,
-                    email,
-                    password
-                });
+                const { data } = await axios.post(
+                    backendUrl + "/api/user/register",
+                    { name, email, password },
+                );
 
-                if (data.success || data.sucess) { // ✅ handles both spellings
+                if (data.success || data.sucess) {
                     setToken(data.token);
                     setUser(data.user);
-                    localStorage.setItem('token', data.token);
+                    localStorage.setItem("token", data.token);
                     setShowLogin(false);
                 } else {
                     toast.error(data.message);
                 }
             }
         } catch (error) {
-            toast.error(error.response?.data?.message || "Something went wrong");
+            toast.error(
+                error.response?.data?.message || "Something went wrong",
+            );
         }
     };
 
     useEffect(() => {
         document.body.style.overflow = "hidden";
-        return () => { document.body.style.overflow = "unset"; };
+        return () => {
+            document.body.style.overflow = "unset";
+        };
     }, []);
 
     return (
-        <div className='fixed top-0 right-0 left-0 bottom-0 z-10 backdrop-blur-sm bg-black/30 flex justify-center items-center'>
+        <div className="fixed inset-0 z-50 backdrop-blur-md bg-black/60 flex justify-center items-center transition-all duration-500">
             <motion.form
                 onSubmit={onSubmitHandler}
-                initial={{ opacity: 0.2, y: 100 }}
-                transition={{ duration: 1 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0.2, y: 50, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
-                className='relative bg-white p-10 rounded-xl text-slate-500'
+                className="relative p-10 rounded-2xl border transition-colors duration-500 w-[90%] max-w-md"
+                style={{
+                    backgroundColor: "var(--bg-card)",
+                    borderColor: "var(--border-color)",
+                    boxShadow:
+                        "0 20px 50px var(--shadow-color), 0 0 20px var(--btn-glow)",
+                    color: "var(--text-secondary)",
+                }}
             >
-                <h1 className='text-center text-2xl text-neutral-700 font-medium'>{state}</h1>
-                <p className='text-sm'>Welcome back, Please {state} to Continue.</p>
+                <h1
+                    className="text-center text-3xl font-bold mb-2 transition-colors duration-500 uppercase tracking-wide"
+                    style={{ color: "var(--text-primary)" }}
+                >
+                    {state}
+                </h1>
+                <p className="text-sm text-center mb-6 opacity-80">
+                    Welcome back! Please {state} to continue.
+                </p>
 
-                {state !== "Login" && (
-                    <div className='border px-6 py-2 flex items-center gap-2 rounded-full mt-4'>
-                        <img src={assets.user_icon} alt="" width={20} />
+                {/* Form Inputs Container */}
+                <div className="flex flex-col gap-4">
+                    {/* --- FULL NAME INPUT (Sign Up Only) --- */}
+                    {state !== "Login" && (
+                        <div
+                            className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
+                            style={{
+                                // Dynamic border toggle handled purely via CSS Variables on state focus
+                                borderColor: "var(--border-color)",
+                                backgroundColor: "var(--bg-input)",
+                            }}
+                            // Tailwind focus-within variables setup for instant color upgrade
+                            onFocus={(e) =>
+                                (e.currentTarget.style.borderColor =
+                                    "var(--accent-primary)")
+                            }
+                            onBlur={(e) =>
+                                (e.currentTarget.style.borderColor =
+                                    "var(--border-color)")
+                            }
+                        >
+                            <User
+                                size={18}
+                                className="transition-colors duration-300 opacity-60 group-focus-within:opacity-100"
+                                style={{ color: "var(--text-secondary)" }}
+                            />
+                            <input
+                                onChange={(e) => setName(e.target.value)}
+                                value={name}
+                                type="text"
+                                placeholder="Full Name"
+                                required
+                                className="outline-none text-sm w-full bg-transparent transition-colors duration-500"
+                                style={{ color: "var(--text-primary)" }}
+                            />
+                        </div>
+                    )}
+
+                    {/* --- EMAIL ID INPUT --- */}
+                    <div
+                        className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
+                        style={{
+                            borderColor: "var(--border-color)",
+                            backgroundColor: "var(--bg-input)",
+                        }}
+                        onFocus={(e) =>
+                            (e.currentTarget.style.borderColor =
+                                "var(--accent-primary)")
+                        }
+                        onBlur={(e) =>
+                            (e.currentTarget.style.borderColor =
+                                "var(--border-color)")
+                        }
+                    >
+                        <Mail
+                            size={18}
+                            className="transition-colors duration-300 opacity-60 group-focus-within:opacity-100"
+                            style={{ color: "var(--text-secondary)" }}
+                        />
                         <input
-                            onChange={e => setName(e.target.value)}
-                            value={name}
-                            type="text"
-                            placeholder='Full Name'
+                            onChange={(e) => setEmail(e.target.value)}
+                            value={email}
+                            type="email"
+                            placeholder="Email ID"
                             required
-                            className='outline-none text-sm'
+                            className="outline-none text-sm w-full bg-transparent transition-colors duration-500"
+                            style={{ color: "var(--text-primary)" }}
                         />
                     </div>
-                )}
 
-                <div className='border px-6 py-2 flex items-center gap-2 rounded-full mt-4'>
-                    <img src={assets.email_icon} alt="" width={20} />
-                    <input
-                        onChange={e => setEmail(e.target.value)}
-                        value={email}
-                        type="email" // ✅ fixed extra space
-                        placeholder='Email ID'
-                        required
-                        className='outline-none text-sm'
-                    />
+                    {/* --- PASSWORD INPUT --- */}
+                    <div
+                        className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
+                        style={{
+                            borderColor: "var(--border-color)",
+                            backgroundColor: "var(--bg-input)",
+                        }}
+                        onFocus={(e) =>
+                            (e.currentTarget.style.borderColor =
+                                "var(--accent-primary)")
+                        }
+                        onBlur={(e) =>
+                            (e.currentTarget.style.borderColor =
+                                "var(--border-color)")
+                        }
+                    >
+                        <Lock
+                            size={18}
+                            className="transition-colors duration-300 opacity-60 group-focus-within:opacity-100"
+                            style={{ color: "var(--text-secondary)" }}
+                        />
+                        <input
+                            onChange={(e) => setPassword(e.target.value)}
+                            value={password}
+                            type="password"
+                            placeholder="Password"
+                            required
+                            className="outline-none text-sm w-full bg-transparent transition-colors duration-500"
+                            style={{ color: "var(--text-primary)" }}
+                        />
+                    </div>
                 </div>
 
-                <div className='border px-6 py-2 flex items-center gap-2 rounded-full mt-4'>
-                    <img src={assets.lock_icon} alt="" width={20} />
-                    <input
-                        onChange={e => setPassword(e.target.value)}
-                        value={password}
-                        type="password"
-                        placeholder='Password'
-                        required
-                        className='outline-none text-sm'
-                    />
-                </div>
+                <p
+                    className="text-xs my-4 w-fit cursor-pointer hover:underline transition-colors duration-300 font-medium"
+                    style={{ color: "var(--accent-primary)" }}
+                >
+                    Forgot Password?
+                </p>
 
-                <p className='text-sm text-blue-600 my-4 cursor-pointer'>Forget Password?</p>
-                <button className='bg-blue-600 text-white w-full py-2 rounded-full'>
+                {/* Submit Button */}
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-3 rounded-full font-bold tracking-wide mt-2 transition-all duration-300 cursor-pointer"
+                    style={{
+                        background:
+                            "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
+                        color: "var(--bg-primary)",
+                        boxShadow: "0 4px 15px var(--btn-glow)",
+                    }}
+                >
                     {state === "Login" ? "Login" : "Create Account"}
-                </button>
+                </motion.button>
 
-                {state === "Login" ? (
-                    <p className='mt-5 text-center'>
-                        Don't Have an account?{" "}
-                        <span
-                            className='text-blue-600 cursor-pointer'
-                            onClick={() => setState("Sign Up")}
-                        >
-                            Sign Up
-                        </span>
-                    </p>
-                ) : (
-                    <p className='mt-5 text-center'>
-                        Already Have an account?{" "}
-                        <span
-                            className='text-blue-600 cursor-pointer'
-                            onClick={() => setState("Login")}
-                        >
-                            Login
-                        </span>
-                    </p>
-                )}
+                {/* Toggle System Text */}
+                <div
+                    className="mt-6 text-center text-sm transition-colors duration-500"
+                    style={{ color: "var(--text-secondary)" }}
+                >
+                    {state === "Login" ? (
+                        <p>
+                            Don't have an account?{" "}
+                            <span
+                                className="font-bold cursor-pointer transition-colors duration-300 hover:underline pl-1"
+                                style={{ color: "var(--accent-primary)" }}
+                                onClick={() => setState("Sign Up")}
+                            >
+                                Sign Up
+                            </span>
+                        </p>
+                    ) : (
+                        <p>
+                            Already have an account?{" "}
+                            <span
+                                className="font-bold cursor-pointer transition-colors duration-300 hover:underline pl-1"
+                                style={{ color: "var(--accent-primary)" }}
+                                onClick={() => setState("Login")}
+                            >
+                                Login
+                            </span>
+                        </p>
+                    )}
+                </div>
 
-                <img
+                {/* Reusable CrossIcon */}
+                <CrossIcon
+                    size={14}
                     onClick={() => setShowLogin(false)}
-                    src={assets.cross_icon}
-                    alt=""
-                    className="absolute top-5 right-5 cursor-pointer"
+                    className="absolute top-5 right-5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] cursor-pointer"
                 />
             </motion.form>
         </div>
