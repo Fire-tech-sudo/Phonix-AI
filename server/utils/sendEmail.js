@@ -1,44 +1,50 @@
-import nodemailer from "nodemailer";
+// Koi import nahi chahiye! Node 18+ me fetch built-in hota hai.
 
-// FIX: Singleton transporter — created once, reused across all calls
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465, // 465 is for secure SMTP
-  secure: true, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const sendOtpEmail = async (email, otp) => {
+  const url = "https://api.brevo.com/v3/smtp/email";
 
-// FIX: Verify connection on startup so misconfiguration fails fast
-transporter.verify((error) => {
-  if (error) {
-    console.error("[Mailer] SMTP connection failed:", error);
-  } else {
-    console.log("[Mailer] SMTP server is ready.");
+  const options = {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      // Ab hamari full key yahan securely pass hogi bina spaces ke
+      "api-key": process.env.BREVO_API_KEY.trim(),
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "Pixora AI",
+        email: process.env.EMAIL_USER.trim(),
+      },
+      to: [{ email: email }],
+      subject: "Your Registration OTP",
+      htmlContent: `
+                <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+                    <h2>Welcome to Pixora AI!</h2>
+                    <p>Your one-time password (OTP) for registration is:</p>
+                    <h1 style="color: #4f46e5; letter-spacing: 5px;">${otp}</h1>
+                    <p>This code is valid for 5 minutes. Do not share it with anyone.</p>
+                </div>
+            `,
+    }),
+  };
+
+  try {
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      // Agar API key ya email me abhi bhi koi minor error hogi, toh ye exactly bata dega
+      const errorData = await response.json();
+      console.error("Brevo API Direct Error:", errorData);
+      throw new Error(`Brevo Error: ${errorData.message}`);
+    }
+
+    console.log("🔥 Email sent successfully via Direct Fetch API!");
+    return true;
+  } catch (error) {
+    console.error("Email Sending Failed:", error);
+    throw error;
   }
-});
-
-const sendOtpEmail = async (toEmail, otp) => {
-  // FIX: Sanitize OTP before injecting into HTML (defense-in-depth)
-  const safeOtp = String(otp).replace(/[^0-9]/g, "");
-
-  await transporter.sendMail({
-    from: `"PixoraAI" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
-    subject: "Your OTP Code – PixoraAI",
-    html: `
-      <div style="font-family:sans-serif;max-width:420px;padding:24px;border:1px solid #e5e7eb;border-radius:8px">
-        <h2 style="margin-top:0">Verify your account</h2>
-        <p>Use the OTP below to complete your registration. It expires in <strong>5 minutes</strong>.</p>
-        <div style="font-size:36px;font-weight:bold;letter-spacing:12px;color:#4f46e5;margin:24px 0">
-          ${safeOtp}
-        </div>
-        <p style="color:#6b7280;font-size:13px">If you didn't request this, you can safely ignore this email.</p>
-      </div>
-    `,
-  });
 };
 
 export default sendOtpEmail;
