@@ -46,11 +46,9 @@ export const sendRegistrationOtp = async (req, res) => {
     );
 
     // FIX: Send email BEFORE confirming success; if it throws, the catch handles it
-    await sendOtpEmail(email, otp);
+    sendOtpEmail(email, otp).catch((err) => console.log("Background Email Error:", err));
 
-    return res
-      .status(200)
-      .json({ success: true, message: "OTP sent to your email successfully." });
+res.json({ success: true, message: "OTP sent to your email successfully" });
   } catch (error) {
     // FIX: console.error instead of console.log for actual errors
     console.error("[sendRegistrationOtp] Error:", error);
