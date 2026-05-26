@@ -12,13 +12,18 @@
   "dependencies": {
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "disposable-email-domains": "^1.0.62",
+    "disposable-email-domains-js": "^1.25.0",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "form-data": "^4.0.5",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
-    "mongoose": "^9.0.2",
+    "mongoose": "^9.6.2",
+    "nodemailer": "^8.0.8",
     "nodemon": "^3.1.11",
     "razorpay": "^2.9.6"
   }

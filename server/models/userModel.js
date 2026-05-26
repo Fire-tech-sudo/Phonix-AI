@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     creditBalance: { type: Number, default: 2 },
     isPro: { type: Boolean, default: false },
-    proExpiresAt: { type: Date, default: null } // Optional: Pro expiry date
+    isVerified: { type: Boolean, default: false },
+    proExpiresAt: { type: Date, default: 30 }, // Optional: Pro expiry date
 });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

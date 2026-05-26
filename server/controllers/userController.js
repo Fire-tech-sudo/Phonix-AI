@@ -4,37 +4,78 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import userModel from "../models/userModel.js";
 import transactionModel from "../models/transactionModel.js";
+import { validateEmail, validatePassword } from "../utils/validators.js";
+import { verifyOtpHelper } from "../controllers/otpController.js";
 
 /* ====================== REGISTER ====================== */
+// controllers/userController.js
+
 const registerUser = async (req, res) => {
     try {
-        const { email, name, password } = req.body;
-        if (!name || !email || !password) {
+        const { email, name, password, otp } = req.body;
+
+        if (!name || !email || !password || !otp) {
             return res.json({ success: false, message: "Missing Details" });
         }
 
+        const emailCheck = validateEmail(email);
+        if (!emailCheck.valid)
+            return res.json({ success: false, message: emailCheck.message });
+
+        const passwordCheck = validatePassword(password);
+        if (!passwordCheck.valid)
+            return res.json({ success: false, message: passwordCheck.message });
+
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser)
+            return res.json({
+                success: false,
+                message: "Account already exists",
+            });
+
+        // 🟢 YAHAN HUM OTP VERIFY KAR RAHE HAIN 🟢
+        const otpCheck = await verifyOtpHelper(email, otp);
+
+        // Agar OTP galat hai, yahi se error bhej do (User save HOGA HI NAHI)
+        if (!otpCheck.success) {
+            return res.json({ success: false, message: otpCheck.message });
+        }
+
+        // 🟢 AGAR OTP SAHI HAI, TABHI YAHAN AAYEGA AUR USER STORE HOGA 🟢
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const userData = { name, email, password: hashedPassword };
-        const newUser = new userModel(userData);
-        const user = await newUser.save();
+        const newUser = new userModel({
+            name: name.trim(),
+            email,
+            password: hashedPassword,
+        });
 
+        const user = await newUser.save(); // User DB me store ho gaya
+
+        // Token de do
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
             expiresIn: "7d",
         });
 
-        res.json({ success: true, token, user: { name: user.name } });
+        res.json({
+            success: true,
+            message: "Account created successfully",
+            token,
+            user: { name: user.name },
+        });
     } catch (error) {
-        console.log(error);
+        console.log("Registration Error:", error);
         res.json({ success: false, message: error.message });
     }
 };
 
 /* ====================== LOGIN ====================== */
 const loginUser = async (req, res) => {
+    // Ye same purana wala hi rahega, kyunki yahan OTP chahiye hi nahi
     try {
         const { email, password } = req.body;
+
         const user = await userModel.findOne({ email });
         if (!user)
             return res.json({ success: false, message: "User does not exist" });
