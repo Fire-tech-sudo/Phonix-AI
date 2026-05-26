@@ -2,9 +2,7 @@ import nodemailer from "nodemailer";
 
 // FIX: Singleton transporter — created once, reused across all calls
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465, // 465 is for secure SMTP
-  secure: true, // true for 465, false for other ports
+  service: "Gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
