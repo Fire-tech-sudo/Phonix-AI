@@ -1,15 +1,48 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import React, {
+    useContext,
+    useEffect,
+    useState,
+    useRef,
+    useCallback,
+} from "react";
 import { AppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
-// 🔥 Lucide Icons aur custom CrossIcon
-import { User, Mail, Lock, ShieldCheck } from "lucide-react";
+import { User, Mail, Lock, ShieldCheck, Loader2 } from "lucide-react";
 import CrossIcon from "../imageComponents/CrossIcon";
 
+const STATES = {
+    LOGIN: "Login",
+    SIGN_UP: "Sign Up",
+    OTP: "OTP Verification",
+};
+
+const OTP_RESEND_SECONDS = 60;
+
+const InputWrapper = ({ children }) => {
+    const [focused, setFocused] = useState(false);
+    return (
+        <div
+            className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
+            style={{
+                borderColor: focused
+                    ? "var(--accent-primary)"
+                    : "var(--border-color)",
+                backgroundColor: "var(--bg-input)",
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+        >
+            {children}
+        </div>
+    );
+};
+
 const Login = () => {
-    // States: "Login", "Sign Up", "OTP Verification"
-    const [state, setState] = useState("Login");
+    const [state, setState] = useState(STATES.LOGIN);
+
+    // AppContext se values le rahe hain
     const { setShowLogin, backendUrl, setToken, setUser } =
         useContext(AppContext);
 
@@ -17,166 +50,12 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    // --- OTP States & Logic ---
+    const [isLoading, setIsLoading] = useState(false);
+
     const [otp, setOtp] = useState(new Array(6).fill(""));
-    const [timer, setTimer] = useState(60);
+    const [timer, setTimer] = useState(OTP_RESEND_SECONDS);
     const [canResend, setCanResend] = useState(false);
     const inputRefs = useRef([]);
-
-    // Timer Effect
-    useEffect(() => {
-        let interval;
-        if (state === "OTP Verification" && timer > 0) {
-            interval = setInterval(() => {
-                setTimer((prev) => prev - 1);
-            }, 1000);
-        } else if (timer === 0) {
-            setCanResend(true);
-        }
-        return () => clearInterval(interval);
-    }, [state, timer]);
-
-    const handleOtpChange = (index, value) => {
-        if (isNaN(value)) return;
-
-        const newOtp = [...otp];
-        newOtp[index] = value.substring(value.length - 1);
-        setOtp(newOtp);
-
-        // Auto-focus next input
-        if (value && index < 5 && inputRefs.current[index + 1]) {
-            inputRefs.current[index + 1].focus();
-        }
-    };
-
-    const handleOtpKeyDown = (index, e) => {
-        // Auto-focus previous input on Backspace
-        if (
-            e.key === "Backspace" &&
-            !otp[index] &&
-            index > 0 &&
-            inputRefs.current[index - 1]
-        ) {
-            inputRefs.current[index - 1].focus();
-        }
-    };
-
-    const handlePaste = (e) => {
-        e.preventDefault();
-        const pastedData = e.clipboardData
-            .getData("text")
-            .slice(0, 6)
-            .split("");
-        if (pastedData.length > 0) {
-            let newOtp = [...otp];
-            pastedData.forEach((char, i) => {
-                if (i < 6 && !isNaN(char)) newOtp[i] = char;
-            });
-            setOtp(newOtp);
-            // Focus next empty input or last
-            const focusIndex = Math.min(pastedData.length, 5);
-            inputRefs.current[focusIndex].focus();
-        }
-    };
-
-    const handleResendOtp = async () => {
-        if (!canResend) return;
-        setTimer(60);
-        setCanResend(false);
-        setOtp(new Array(6).fill(""));
-
-        try {
-            // Yahan humara send-otp endpoint call hoga
-            const { data } = await axios.post(
-                backendUrl + "/api/auth/send-otp",
-                { email },
-            );
-            if (data.success) {
-                toast.success("OTP Resent Successfully!");
-            } else {
-                toast.error(data.message || "Failed to resend OTP");
-            }
-        } catch (error) {
-            toast.error("Error resending OTP");
-        }
-    };
-
-    // --- Main Submit Handler ---
-    const onSubmitHandler = async (e) => {
-        e.preventDefault();
-
-        try {
-            // ================= 1. LOGIN MODE =================
-            if (state === "Login") {
-                const { data } = await axios.post(
-                    backendUrl + "/api/user/login",
-                    { email, password },
-                );
-
-                if (data.success || data.sucess) {
-                    setToken(data.token);
-                    setUser(data.user);
-                    localStorage.setItem("token", data.token);
-                    setShowLogin(false);
-                    toast.success("Logged In Successfully!");
-                } else {
-                    toast.error(data.message);
-                }
-            }
-            // ================= 2. SIGN UP MODE (Request OTP) =================
-            else if (state === "Sign Up") {
-                // Name validation (Optional front-end check)
-                if (name.trim().length < 2) {
-                    return toast.error(
-                        "Name must be at least 2 characters long",
-                    );
-                }
-
-                // Call the Send OTP API
-                const { data } = await axios.post(
-                    backendUrl + "/api/auth/send-otp",
-                    { email },
-                );
-
-                if (data.success || data.sucess) {
-                    toast.success("OTP sent to your email!");
-                    setState("OTP Verification");
-                    setTimer(60);
-                    setCanResend(false);
-                } else {
-                    toast.error(data.message);
-                }
-            }
-            // ================= 3. OTP VERIFICATION MODE (Final Register) =================
-            else if (state === "OTP Verification") {
-                const otpString = otp.join("");
-                if (otpString.length < 6) {
-                    toast.error("Please enter a valid 6-digit OTP");
-                    return;
-                }
-
-                // Yahan final register API call hogi saari details ke sath
-                const { data } = await axios.post(
-                    backendUrl + "/api/user/register",
-                    { name, email, password, otp: otpString },
-                );
-
-                if (data.success || data.sucess) {
-                    setToken(data.token);
-                    setUser(data.user);
-                    localStorage.setItem("token", data.token);
-                    setShowLogin(false);
-                    toast.success("Account Created Successfully!");
-                } else {
-                    toast.error(data.message || "Invalid OTP");
-                }
-            }
-        } catch (error) {
-            toast.error(
-                error.response?.data?.message || "Something went wrong",
-            );
-        }
-    };
 
     useEffect(() => {
         document.body.style.overflow = "hidden";
@@ -185,7 +64,176 @@ const Login = () => {
         };
     }, []);
 
-    // ... (Baaki poora UI/return statement exactly same rahega, usme koi change nahi hai)
+    useEffect(() => {
+        if (state !== STATES.OTP) {
+            setOtp(new Array(6).fill(""));
+        }
+        if (state === STATES.OTP) {
+            setTimer(OTP_RESEND_SECONDS);
+            setCanResend(false);
+            setTimeout(() => {
+                inputRefs.current[0]?.focus();
+            }, 400);
+        }
+    }, [state]);
+
+    useEffect(() => {
+        if (state !== STATES.OTP) return;
+        if (timer <= 0) {
+            setCanResend(true);
+            return;
+        }
+        const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+        return () => clearInterval(interval);
+    }, [state, timer]);
+
+    const handleOtpChange = (index, value) => {
+        const digit = value.replace(/\D/g, "").slice(-1);
+        const newOtp = [...otp];
+        newOtp[index] = digit;
+        setOtp(newOtp);
+        if (digit && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleOtpKeyDown = (index, e) => {
+        if (e.key === "Backspace" && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const digits = e.clipboardData
+            .getData("text")
+            .replace(/\D/g, "")
+            .slice(0, 6)
+            .split("");
+
+        if (digits.length === 0) return;
+
+        const newOtp = [...otp];
+        digits.forEach((char, i) => {
+            newOtp[i] = char;
+        });
+        setOtp(newOtp);
+
+        const focusIndex = Math.min(digits.length, 5);
+        setTimeout(() => inputRefs.current[focusIndex]?.focus(), 10);
+    };
+
+    const handleResendOtp = useCallback(async () => {
+        if (!canResend || isLoading) return;
+        setIsLoading(true);
+        try {
+            const { data } = await axios.post(
+                `${backendUrl}/api/auth/send-otp`,
+                { email },
+            );
+            if (data.success) {
+                toast.success("OTP resent successfully!");
+                setTimer(OTP_RESEND_SECONDS);
+                setCanResend(false);
+                setOtp(new Array(6).fill(""));
+                inputRefs.current[0]?.focus();
+            } else {
+                toast.error(data.message || "Failed to resend OTP.");
+            }
+        } catch (error) {
+            toast.error(
+                error.response?.data?.message || "Error resending OTP.",
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    }, [canResend, isLoading, email, backendUrl]);
+
+    // 🔥 YAHAN UPDATE KIYA HAI 🔥
+    // Ye function AppContext aur localStorage dono update karega
+    const applyAuthData = (data) => {
+        setToken(data.token);
+        setUser(data.user);
+        localStorage.setItem("token", data.token);
+
+        // Default header set kar rahe hain bina 'Bearer' ke (middle ware ke liye)
+        axios.defaults.headers.common["token"] = data.token;
+
+        setShowLogin(false);
+    };
+
+    const onSubmitHandler = async (e) => {
+        e.preventDefault();
+        if (isLoading) return;
+        setIsLoading(true);
+
+        try {
+            if (state === STATES.LOGIN) {
+                const { data } = await axios.post(
+                    `${backendUrl}/api/user/login`,
+                    { email, password },
+                );
+                if (data.success) {
+                    applyAuthData(data);
+                    toast.success("Logged in successfully!");
+                } else {
+                    toast.error(data.message);
+                }
+            } else if (state === STATES.SIGN_UP) {
+                if (name.trim().length < 2) {
+                    setIsLoading(false);
+                    return toast.error("Name must be at least 2 characters.");
+                }
+                if (password.length < 8) {
+                    setIsLoading(false);
+                    return toast.error(
+                        "Password must be at least 8 characters.",
+                    );
+                }
+
+                const { data } = await axios.post(
+                    `${backendUrl}/api/auth/send-otp`,
+                    { email },
+                );
+                if (data.success) {
+                    toast.success("OTP sent to your email!");
+                    setState(STATES.OTP);
+                } else {
+                    toast.error(data.message);
+                }
+            } else if (state === STATES.OTP) {
+                const otpString = otp.join("");
+                if (otpString.length < 6 || otp.some((d) => d === "")) {
+                    setIsLoading(false);
+                    return toast.error("Please fill in all 6 OTP digits.");
+                }
+
+                const { data } = await axios.post(
+                    `${backendUrl}/api/user/register`,
+                    {
+                        name,
+                        email,
+                        password,
+                        otp: otpString,
+                    },
+                );
+
+                if (data.success) {
+                    applyAuthData(data); // Ye function chalte hi Context update hoga aur credits load ho jayenge
+                    toast.success("Account created successfully!");
+                } else {
+                    toast.error(data.message || "Invalid OTP.");
+                }
+            }
+        } catch (error) {
+            toast.error(
+                error.response?.data?.message || "Something went wrong.",
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 backdrop-blur-md bg-black/60 flex justify-center items-center transition-all duration-500">
             <motion.form
@@ -204,10 +252,10 @@ const Login = () => {
                 }}
             >
                 <h1
-                    className="text-center text-3xl font-bold mb-2 transition-colors duration-500 uppercase tracking-wide flex justify-center items-center gap-3"
+                    className="text-center text-3xl font-bold mb-2 uppercase tracking-wide flex justify-center items-center gap-3"
                     style={{ color: "var(--text-primary)" }}
                 >
-                    {state === "OTP Verification" && (
+                    {state === STATES.OTP && (
                         <ShieldCheck
                             size={30}
                             style={{ color: "var(--accent-primary)" }}
@@ -216,16 +264,31 @@ const Login = () => {
                     {state}
                 </h1>
 
-                <p className="text-sm text-center mb-6 opacity-80">
-                    {state === "OTP Verification"
-                        ? `We've sent a verification code to ${email}`
-                        : `Welcome back! Please ${state} to continue.`}
-                </p>
+                <div className="text-sm text-center mb-6 opacity-80 flex flex-col gap-1">
+                    {state === STATES.OTP ? (
+                        <>
+                            <span>
+                                We've sent a verification code to{" "}
+                                <b style={{ color: "var(--text-primary)" }}>
+                                    {email}
+                                </b>
+                            </span>
+                            <span
+                                onClick={() => setState(STATES.SIGN_UP)}
+                                className="text-xs cursor-pointer hover:underline font-bold transition-colors"
+                                style={{ color: "var(--accent-primary)" }}
+                            >
+                                Wrong email? Change here
+                            </span>
+                        </>
+                    ) : (
+                        <span>Welcome! Please {state} to continue.</span>
+                    )}
+                </div>
 
-                {/* Form Inputs Container */}
                 <div className="flex flex-col gap-4">
                     <AnimatePresence mode="wait">
-                        {state !== "OTP Verification" ? (
+                        {state !== STATES.OTP ? (
                             <motion.div
                                 key="credentials"
                                 initial={{ opacity: 0, x: -20 }}
@@ -233,26 +296,11 @@ const Login = () => {
                                 exit={{ opacity: 0, x: 20 }}
                                 className="flex flex-col gap-4"
                             >
-                                {/* --- FULL NAME INPUT (Sign Up Only) --- */}
-                                {state === "Sign Up" && (
-                                    <div
-                                        className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
-                                        style={{
-                                            borderColor: "var(--border-color)",
-                                            backgroundColor: "var(--bg-input)",
-                                        }}
-                                        onFocus={(e) =>
-                                            (e.currentTarget.style.borderColor =
-                                                "var(--accent-primary)")
-                                        }
-                                        onBlur={(e) =>
-                                            (e.currentTarget.style.borderColor =
-                                                "var(--border-color)")
-                                        }
-                                    >
+                                {state === STATES.SIGN_UP && (
+                                    <InputWrapper>
                                         <User
                                             size={18}
-                                            className="transition-colors duration-300 opacity-60 group-focus-within:opacity-100"
+                                            className="opacity-60 group-focus-within:opacity-100"
                                             style={{
                                                 color: "var(--text-secondary)",
                                             }}
@@ -264,34 +312,21 @@ const Login = () => {
                                             value={name}
                                             type="text"
                                             placeholder="Full Name"
+                                            autoComplete="name"
                                             required
-                                            className="outline-none text-sm w-full bg-transparent transition-colors duration-500"
+                                            minLength={2}
+                                            className="outline-none text-sm w-full bg-transparent"
                                             style={{
                                                 color: "var(--text-primary)",
                                             }}
                                         />
-                                    </div>
+                                    </InputWrapper>
                                 )}
 
-                                {/* --- EMAIL ID INPUT --- */}
-                                <div
-                                    className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
-                                    style={{
-                                        borderColor: "var(--border-color)",
-                                        backgroundColor: "var(--bg-input)",
-                                    }}
-                                    onFocus={(e) =>
-                                        (e.currentTarget.style.borderColor =
-                                            "var(--accent-primary)")
-                                    }
-                                    onBlur={(e) =>
-                                        (e.currentTarget.style.borderColor =
-                                            "var(--border-color)")
-                                    }
-                                >
+                                <InputWrapper>
                                     <Mail
                                         size={18}
-                                        className="transition-colors duration-300 opacity-60 group-focus-within:opacity-100"
+                                        className="opacity-60 group-focus-within:opacity-100"
                                         style={{
                                             color: "var(--text-secondary)",
                                         }}
@@ -303,31 +338,17 @@ const Login = () => {
                                         value={email}
                                         type="email"
                                         placeholder="Email ID"
+                                        autoComplete="email"
                                         required
-                                        className="outline-none text-sm w-full bg-transparent transition-colors duration-500"
+                                        className="outline-none text-sm w-full bg-transparent"
                                         style={{ color: "var(--text-primary)" }}
                                     />
-                                </div>
+                                </InputWrapper>
 
-                                {/* --- PASSWORD INPUT --- */}
-                                <div
-                                    className="border px-5 py-3 flex items-center gap-3.5 rounded-full transition-all duration-300 group"
-                                    style={{
-                                        borderColor: "var(--border-color)",
-                                        backgroundColor: "var(--bg-input)",
-                                    }}
-                                    onFocus={(e) =>
-                                        (e.currentTarget.style.borderColor =
-                                            "var(--accent-primary)")
-                                    }
-                                    onBlur={(e) =>
-                                        (e.currentTarget.style.borderColor =
-                                            "var(--border-color)")
-                                    }
-                                >
+                                <InputWrapper>
                                     <Lock
                                         size={18}
-                                        className="transition-colors duration-300 opacity-60 group-focus-within:opacity-100"
+                                        className="opacity-60 group-focus-within:opacity-100"
                                         style={{
                                             color: "var(--text-secondary)",
                                         }}
@@ -339,33 +360,40 @@ const Login = () => {
                                         value={password}
                                         type="password"
                                         placeholder="Password"
+                                        autoComplete={
+                                            state === STATES.LOGIN
+                                                ? "current-password"
+                                                : "new-password"
+                                        }
                                         required
-                                        className="outline-none text-sm w-full bg-transparent transition-colors duration-500"
+                                        minLength={8}
+                                        className="outline-none text-sm w-full bg-transparent"
                                         style={{ color: "var(--text-primary)" }}
                                     />
-                                </div>
+                                </InputWrapper>
                             </motion.div>
                         ) : (
-                            /* --- OTP INPUT SECTION --- */
                             <motion.div
                                 key="otp"
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="flex flex-col items-center justify-center gap-6 py-4"
+                                className="flex flex-col items-center gap-6 py-4"
                             >
                                 <div
                                     className="flex justify-between w-full gap-2 sm:gap-3"
                                     onPaste={handlePaste}
                                 >
-                                    {otp.map((data, index) => (
+                                    {otp.map((digit, index) => (
                                         <input
                                             key={index}
                                             type="text"
+                                            inputMode="numeric"
                                             maxLength="1"
+                                            aria-label={`OTP digit ${index + 1}`}
                                             ref={(el) =>
                                                 (inputRefs.current[index] = el)
                                             }
-                                            value={data}
+                                            value={digit}
                                             onChange={(e) =>
                                                 handleOtpChange(
                                                     index,
@@ -379,11 +407,11 @@ const Login = () => {
                                             style={{
                                                 backgroundColor:
                                                     "var(--bg-input)",
-                                                borderColor: data
+                                                borderColor: digit
                                                     ? "var(--accent-primary)"
                                                     : "var(--border-color)",
                                                 color: "var(--text-primary)",
-                                                boxShadow: data
+                                                boxShadow: digit
                                                     ? "0 0 10px var(--btn-glow)"
                                                     : "none",
                                             }}
@@ -405,7 +433,6 @@ const Login = () => {
                                     ))}
                                 </div>
 
-                                {/* Resend Timer Area */}
                                 <div className="flex items-center justify-between w-full text-sm">
                                     <p className="font-medium">
                                         Time left:{" "}
@@ -421,13 +448,19 @@ const Login = () => {
                                     <button
                                         type="button"
                                         onClick={handleResendOtp}
-                                        disabled={!canResend}
-                                        className={`font-bold transition-all duration-300 ${canResend ? "hover:underline cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
+                                        disabled={!canResend || isLoading}
+                                        className={`font-bold transition-all duration-300 ${
+                                            canResend && !isLoading
+                                                ? "hover:underline cursor-pointer"
+                                                : "opacity-40 cursor-not-allowed"
+                                        }`}
                                         style={{
                                             color: "var(--accent-primary)",
                                         }}
                                     >
-                                        Resend Code
+                                        {isLoading
+                                            ? "Sending..."
+                                            : "Resend Code"}
                                     </button>
                                 </div>
                             </motion.div>
@@ -435,23 +468,22 @@ const Login = () => {
                     </AnimatePresence>
                 </div>
 
-                {state === "Login" && (
+                {state === STATES.LOGIN && (
                     <p
-                        className="text-xs my-4 w-fit cursor-pointer hover:underline transition-colors duration-300 font-medium"
+                        className="text-xs my-4 w-fit cursor-pointer hover:underline font-medium"
                         style={{ color: "var(--accent-primary)" }}
                     >
                         Forgot Password?
                     </p>
                 )}
 
-                {/* Spacing correction if Signup or OTP */}
-                {state !== "Login" && <div className="h-4"></div>}
+                {state !== STATES.LOGIN && <div className="h-4" />}
 
-                {/* Dynamic Submit Button */}
                 <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full py-3 rounded-full font-bold tracking-wide transition-all duration-300 cursor-pointer"
+                    whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                    whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                    disabled={isLoading}
+                    className="w-full py-3 rounded-full font-bold tracking-wide transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     style={{
                         background:
                             "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",
@@ -459,26 +491,28 @@ const Login = () => {
                         boxShadow: "0 4px 15px var(--btn-glow)",
                     }}
                 >
-                    {state === "Login"
+                    {isLoading && (
+                        <Loader2 size={18} className="animate-spin" />
+                    )}
+                    {state === STATES.LOGIN
                         ? "Login"
-                        : state === "Sign Up"
+                        : state === STATES.SIGN_UP
                           ? "Create Account"
                           : "Verify OTP"}
                 </motion.button>
 
-                {/* Toggle System Text */}
-                {state !== "OTP Verification" && (
+                {state !== STATES.OTP && (
                     <div
-                        className="mt-6 text-center text-sm transition-colors duration-500"
+                        className="mt-6 text-center text-sm"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        {state === "Login" ? (
+                        {state === STATES.LOGIN ? (
                             <p>
                                 Don't have an account?{" "}
                                 <span
-                                    className="font-bold cursor-pointer transition-colors duration-300 hover:underline pl-1"
+                                    className="font-bold cursor-pointer hover:underline pl-1"
                                     style={{ color: "var(--accent-primary)" }}
-                                    onClick={() => setState("Sign Up")}
+                                    onClick={() => setState(STATES.SIGN_UP)}
                                 >
                                     Sign Up
                                 </span>
@@ -487,9 +521,9 @@ const Login = () => {
                             <p>
                                 Already have an account?{" "}
                                 <span
-                                    className="font-bold cursor-pointer transition-colors duration-300 hover:underline pl-1"
+                                    className="font-bold cursor-pointer hover:underline pl-1"
                                     style={{ color: "var(--accent-primary)" }}
-                                    onClick={() => setState("Login")}
+                                    onClick={() => setState(STATES.LOGIN)}
                                 >
                                     Login
                                 </span>
@@ -498,7 +532,6 @@ const Login = () => {
                     </div>
                 )}
 
-                {/* Reusable CrossIcon */}
                 <CrossIcon
                     size={14}
                     onClick={() => setShowLogin(false)}

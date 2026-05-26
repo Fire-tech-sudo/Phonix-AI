@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
-
 const userAuth = async (req, res, next) => {
     const { token } = req.headers;
     if (!token) {
@@ -9,10 +8,8 @@ const userAuth = async (req, res, next) => {
             message: "Not Authorised, Login Again.",
         });
     }
-
     try {
         const tokenDecode = jwt.verify(token, process.env.JWT_SECRET);
-
         if (tokenDecode.id) {
             req.userId = tokenDecode.id; // attach directly, not inside body
             next();
@@ -32,5 +29,4 @@ export const otpLimiter = rateLimit({
     max: 3,
     message: { error: "Too many OTP requests. Try again in 10 minutes." },
 });
-
 export default userAuth;
