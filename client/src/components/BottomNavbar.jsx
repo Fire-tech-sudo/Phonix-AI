@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Image, Sparkles, User } from "lucide-react"; // Aapke app ke icons
+import { Home, Image, Sparkles, User } from "lucide-react";
+import { AppContext } from "../context/AppContext";
 
 const BottomNavbar = () => {
   const location = useLocation();
+  const { user, setShowLogin } = useContext(AppContext);
 
   // Route check karne ka function
   const isActive = (path) => location.pathname === path;
@@ -16,7 +18,6 @@ const BottomNavbar = () => {
 
   return (
     <nav
-      // Aapke HTML snippet wali classes: rounded-t-2xl, backdrop-blur, aur shadow
       className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center py-2 px-2 backdrop-blur-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] rounded-t-2xl border-t transition-all duration-300"
       style={{
         backgroundColor: "var(--bg-card)",
@@ -45,16 +46,22 @@ const BottomNavbar = () => {
       {/* 3. Generate (Create) Tab */}
       <Link
         to="/result"
-        className={`flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ${isActive("/generate") ? activeClass : inactiveClass}`}
+        onClick={(e) => {
+          if (!user) {
+            e.preventDefault();
+            setShowLogin(true);
+          }
+        }}
+        className={`flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ${isActive("/result") ? activeClass : inactiveClass}`}
       >
-        <Sparkles size={22} strokeWidth={isActive("/generate") ? 2.5 : 2} />
+        <Sparkles size={22} strokeWidth={isActive("/result") ? 2.5 : 2} />
         <span className="font-medium text-[10px] mt-1">Create</span>
       </Link>
 
       {/* 4. Account Tab */}
       <Link
         to="/profile"
-        className={`flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ${isActive("/profile") ? activeClass : inactiveClass}`}
+        className={`flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ${isActive("/account") ? activeClass : inactiveClass}`}
       >
         <User size={22} strokeWidth={isActive("/profile") ? 2.5 : 2} />
         <span className="font-medium text-[10px] mt-1">Account</span>
