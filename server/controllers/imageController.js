@@ -68,3 +68,32 @@ export const generateImage = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
+// ── DELETE IMAGE ──
+export const deleteImage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.userId;
+
+        const image = await galleryModel.findById(id);
+
+        if (!image) {
+            return res.json({ success: false, message: "Image nahi mili" });
+        }
+
+        // Sirf owner delete kar sake
+        if (image.userId.toString() !== userId.toString()) {
+            return res.json({
+                success: false,
+                message: "Aap sirf apni images delete kar sakte hain",
+            });
+        }
+
+        await galleryModel.findByIdAndDelete(id);
+
+        return res.json({ success: true, message: "Image delete ho gayi" });
+    } catch (error) {
+        console.error("Delete error:", error);
+        return res.json({ success: false, message: error.message });
+    }
+};

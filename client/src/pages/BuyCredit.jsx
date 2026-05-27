@@ -89,10 +89,11 @@ const BuyCredit = () => {
             transition={{ duration: 1 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="min-h-[80vh] text-center pt-14 mb-10 transition-colors duration-500"
+            // 🔥 FIX 1: pb-28 added for Bottom Navbar clearance on mobile
+            className="min-h-[80vh] text-center pt-8 sm:pt-14 mb-10 pb-28 md:pb-10 transition-colors duration-500"
         >
             <button
-                className="border px-10 py-2 rounded-full mb-6 font-medium tracking-wide transition-colors duration-500 uppercase text-xs"
+                className="border px-6 sm:px-10 py-1.5 sm:py-2 rounded-full mb-4 sm:mb-6 font-medium tracking-wide transition-colors duration-500 uppercase text-[10px] sm:text-xs"
                 style={{
                     borderColor: "var(--border-color)",
                     color: "var(--text-secondary)",
@@ -102,17 +103,19 @@ const BuyCredit = () => {
                 Our Plans
             </button>
             <h1
-                className="text-center text-3xl font-bold mb-6 sm:mb-10 transition-colors duration-500"
+                // 🔥 FIX 2: Responsive text sizes
+                className="text-center text-2xl sm:text-3xl font-bold mb-8 sm:mb-10 transition-colors duration-500 px-4"
                 style={{ color: "var(--text-primary)" }}
             >
                 Choose The Plan
             </h1>
 
-            <div className="flex flex-wrap justify-center gap-6 text-left">
+            <div className="flex flex-wrap justify-center gap-5 sm:gap-6 text-left px-2 sm:px-0">
                 {plans.map((item, index) => (
                     <div
                         key={index}
-                        className="border rounded-2xl py-12 px-8 hover:scale-105 transition-all duration-300"
+                        // 🔥 FIX 3: w-full on mobile, auto width on bigger screens
+                        className="w-full sm:w-auto min-w-[280px] sm:min-w-[300px] border rounded-2xl py-8 sm:py-12 px-6 sm:px-8 hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 flex flex-col items-center sm:items-start text-center sm:text-left"
                         style={{
                             backgroundColor: "var(--bg-card)",
                             borderColor: "var(--border-color)",
@@ -120,37 +123,39 @@ const BuyCredit = () => {
                             color: "var(--text-secondary)",
                         }}
                     >
-                        {/*<img 
-                            width={40} 
-                            src={assets.logo_icon} 
-                            alt="" 
-                            style={{ filter: "drop-shadow(0 0 5px var(--accent-primary))" }}
-                        />*/}
-                        <Logo className="w-36 transition-all duration-500 filter drop-shadow-[0_0_8px_var(--shadow-color)]" />
+                        <div className="mb-4">
+                            <Logo className="w-28 sm:w-36 transition-all duration-500 filter drop-shadow-[0_0_8px_var(--shadow-color)]" />
+                        </div>
+
                         <p
-                            className="mt-4 mb-1 font-bold text-lg transition-colors duration-500 uppercase tracking-wide"
+                            className="mt-2 sm:mt-4 mb-1 font-bold text-base sm:text-lg transition-colors duration-500 uppercase tracking-wide"
                             style={{ color: "var(--text-primary)" }}
                         >
                             {item.id}
                         </p>
-                        <p className="text-sm mb-6 opacity-80">{item.desc}</p>
-                        <p className="mb-2">
+
+                        <p className="text-xs sm:text-sm mb-4 sm:mb-6 opacity-80">
+                            {item.desc}
+                        </p>
+
+                        <p className="mb-4 sm:mb-2">
                             <span
-                                className="text-4xl font-bold transition-colors duration-500"
+                                className="text-3xl sm:text-4xl font-bold transition-colors duration-500"
                                 style={{ color: "var(--accent-primary)" }}
                             >
                                 ${item.price}
                             </span>
-                            <span className="font-medium opacity-70">
+                            <span className="text-sm font-medium opacity-70">
                                 {" "}
                                 / {item.credits} credits
                             </span>
                         </p>
+
                         <motion.button
                             onClick={() => paymentRazorpay(item.id)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full font-bold mt-8 text-sm rounded-xl py-3 min-w-52 transition-all duration-300"
+                            className="w-full font-bold mt-4 sm:mt-8 text-xs sm:text-sm rounded-xl py-3.5 sm:py-3 transition-all duration-300"
                             style={{
                                 background:
                                     "linear-gradient(to right, var(--btn-gradient-start), var(--btn-gradient-end))",

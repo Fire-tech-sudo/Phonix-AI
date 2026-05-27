@@ -10,13 +10,17 @@ import Footer from "./components/Footer";
 import Login from "./components/Login";
 import { AppContext } from "./context/AppContext";
 import { useTheme } from "./context/ThemeContext";
+import BottomNavbar from "./components/BottomNavbar";
+// import GallerySidebar from "./components/GallerySidebar";
+import Account from "./pages/Account";
+import Gallery from "./pages/Gallery";
 
 const App = () => {
   const { currentTheme } = useTheme();
   const { showLogin } = useContext(AppContext);
 
   return (
-    <div className="px-4 sm:px-10 md:px-14 lg:px-28 min-h-screen transition-colors duration-500 bg-[var(--bg-primary)] text-[var(--text-primary)]">
+    <div className="px-4 sm:px-10 md:px-14 md:pb-0 lg:px-28 min-h-screen transition-colors duration-500 bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {/* ==================== 🌌 HIGH-TECH BACKGROUND LAYER ==================== */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
         {/* Glow Ball 1 - Top Right (Direct uses custom CSS animation) */}
@@ -71,7 +75,10 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/result" element={<Result />} />
           <Route path="/buycredit" element={<BuyCredit />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/profile" element={<Account />} />
         </Routes>
+        <BottomNavbar />
         <Footer />
       </div>
     </div>

@@ -50,7 +50,7 @@ const GallerySidebar = () => {
 					left: 0,
 					top: 0,
 					height: "100vh",
-					zIndex: 40,
+					zIndex: 60, // 🔥 FIX: 40 se 60 kar diya taaki Navbar ke Theme Changer ke upar rahe
 					display: "flex",
 					flexDirection: "column",
 					background: "var(--bg-secondary)", // Dynamic background
@@ -378,7 +378,7 @@ const GallerySidebar = () => {
 						style={{
 							position: "fixed",
 							inset: 0,
-							zIndex: 100,
+							zIndex: 100, // Ye 100 hai toh Modal sabse top par rahega
 							background: "rgba(0,0,0,0.65)",
 							backdropFilter: "blur(8px)",
 							display: "flex",

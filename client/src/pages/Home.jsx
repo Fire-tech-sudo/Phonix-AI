@@ -4,12 +4,12 @@ import Steps from "../components/Steps";
 import Description from "../components/Description";
 import Testimonials from "../components/Testimonials";
 import GenerateBtn from "../components/GenerateBtn";
-import GallerySidebar from "../components/GallerySidebar";
+// import GallerySidebar from "../components/GallerySidebar";
 
 const Home = () => {
     return (
         <div>
-            <GallerySidebar />
+            {/*<GallerySidebar />*/}
             <Header />
             <Steps />
             <Description />
